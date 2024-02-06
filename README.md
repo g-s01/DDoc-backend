@@ -36,7 +36,7 @@ ganache-cli -h 127.0.0.1 -p 8545
 
 * Open another terminal in the project folder and run this command
 ```
-truffle compile
+truffle migrate
 ```
 
 * In the same terminal, run this command
