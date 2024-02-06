@@ -5,7 +5,7 @@ import os
 from eth_account import Account
 
 w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
-path = '../build/contracts/Record.json'
+path = 'build/contracts/Record.json'
 file_dir = os.path.dirname(os.path.realpath('__file__'))
 file_name = os.path.join(file_dir, path)
 file_name = os.path.abspath(os.path.realpath(file_name))

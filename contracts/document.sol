@@ -15,16 +15,21 @@ contract Record{
         string ipfsHashSignedWithPrivateKey;
         string orgEmail;
     }
-    struct emailAndDocumentHash{
+    struct emailAndDocumentHashAndOrgEmail{
         string email;
         string documentHash;
+        string orgEmail;
     }
     struct emailAndPublicKey{
         string email;
         string publicKey;
     }
+    struct DocumentHashAndOrgEmail{
+        string documentHash;
+        string orgEmail;
+    }
     emailAndPublicKey[] public emailAndPublicKeys;
-    emailAndDocumentHash[] public emailAndDocumentHashs;
+    emailAndDocumentHashAndOrgEmail[] public emailAndDocumentHashAndOrgEmails;
     // A mapping from the document ID to the document
     mapping(string => Document) public documents;
     // An event that is emitted when a document is issued
@@ -60,26 +65,26 @@ contract Record{
             orgEmail
         );
         documents[documentId] = newDocument;
-        emailAndDocumentHashs.push(emailAndDocumentHash(recipientEmail, ipfsHash));
+        emailAndDocumentHashAndOrgEmails.push(emailAndDocumentHashAndOrgEmail(recipientEmail, ipfsHash, orgEmail));
         emit documentIssued(recipientEmail, ipfsHash, ipfsHashSignedWithPrivateKey, orgEmail);
     }
     // A function to get certificates for a particular email
     function getDocument(string memory email)
         public
         view
-        returns (string[] memory)
+        returns (DocumentHashAndOrgEmail[] memory)
     {
         uint256 count = 0;
-        for (uint256 i = 0; i < emailAndDocumentHashs.length; i++) {
-            if (keccak256(abi.encodePacked(emailAndDocumentHashs[i].email)) == keccak256(abi.encodePacked(email))) {
+        for (uint256 i = 0; i < emailAndDocumentHashAndOrgEmails.length; i++) {
+            if (keccak256(abi.encodePacked(emailAndDocumentHashAndOrgEmails[i].email)) == keccak256(abi.encodePacked(email))) {
                 count++;
             }
         }
-        string[] memory documentIds = new string[](count);
+        DocumentHashAndOrgEmail[] memory documentIds = new DocumentHashAndOrgEmail[](count);
         uint256 j = 0;
-        for (uint256 i = 0; i < emailAndDocumentHashs.length; i++) {
-            if (keccak256(abi.encodePacked(emailAndDocumentHashs[i].email)) == keccak256(abi.encodePacked(email))) {
-                documentIds[j] = emailAndDocumentHashs[i].documentHash;
+        for (uint256 i = 0; i < emailAndDocumentHashAndOrgEmails.length; i++) {
+            if (keccak256(abi.encodePacked(emailAndDocumentHashAndOrgEmails[i].email)) == keccak256(abi.encodePacked(email))) {
+                documentIds[j] = DocumentHashAndOrgEmail(emailAndDocumentHashAndOrgEmails[i].documentHash, emailAndDocumentHashAndOrgEmails[i].orgEmail);
                 j++;
             }
         }
@@ -90,7 +95,7 @@ contract Record{
         delete documents[documentId];
     }
     // A function to store email and public key
-    function storeEmailAndDocumentHash(string memory email, string memory publicKey) public {
+    function storeEmailAndPublicKey(string memory email, string memory publicKey) public {
         emailAndPublicKeys.push(emailAndPublicKey(email, publicKey));
     }
     // A function to retrieve public key from email

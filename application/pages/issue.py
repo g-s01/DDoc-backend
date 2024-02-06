@@ -6,6 +6,10 @@ import hashlib
 import streamlit as st
 from utils.doc_utils import generate_certificate
 from connect import contract, w3
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+import endesive
 
 st.title('issue.py')
 
@@ -13,6 +17,18 @@ load_dotenv()
 
 api_key = os.getenv("PINATA_API")
 api_secret = os.getenv("PINATA_SECRET")
+
+# Function to encrypt a message using a public key
+def encrypt_with_public_key(public_key, message):
+    ciphertext = public_key.encrypt(
+        message,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+    return ciphertext
 
 def upload_to_pinata(file_path, api_key, api_secret):
     # Set up the Pinata API endpoint and headers
@@ -34,10 +50,10 @@ def upload_to_pinata(file_path, api_key, api_secret):
 
         if "IpfsHash" in result:
             ipfs_hash = result["IpfsHash"]
-            print(f"File uploaded to Pinata. IPFS Hash: {ipfs_hash}")
+            # print(f"File uploaded to Pinata. IPFS Hash: {ipfs_hash}")
             return ipfs_hash
         else:
-            print(f"Error uploading to Pinata: {result.get('error', 'Unknown error')}")
+            st.write(f"Error uploading to Pinata: {result.get('error', 'Unknown error')}")
             return None
 
 form = st.form(key='Issue Document to someone!')
