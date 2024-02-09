@@ -16,8 +16,8 @@ def generate_keys():
     # Serialize private key to PEM format
     pem_private_key = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()  # Use BestAvailableEncryption for production
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption()
     )
 
     # Serialize public key to PEM format
@@ -33,6 +33,6 @@ submit = st.button('Login')
 
 if submit:
     private_key, public_key = generate_keys()
-    st.success(f"Keys generated for email ID: {email}, keys are: {private_key} and {public_key}")
-    contract.functions.storeEmailAndPublicKey(email, str(public_key)).transact({'from': w3.eth.accounts[0]})
+    contract.functions.storeEmailAndPublicKey(email, public_key).transact({'from': w3.eth.accounts[0]})
+    contract.functions.storeEmailAndPrivateKey(email, private_key).transact({'from': w3.eth.accounts[0]})
     st.success(f"Email and public key successfully stored for email ID: {email}")
