@@ -27,6 +27,8 @@ ACCOUNT (Metamask wallet public key)
 PRIVATE_KEY (Metamask wallet private key)
 ```
 
+`Contract DEPLOYED on SEPOLIA Network: 0x04b3AdDF4e17e5f3af108456785a1450eE5Aa18C`
+
 ## Running the file
 
 To run the file, one can run the following commands:
