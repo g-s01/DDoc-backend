@@ -13,6 +13,29 @@ DDoc (**D**ecentralized **Doc**uments) aims to issue, verify, and revoke documen
 * [streamlit](https://streamlit.io/)
 * account on [Pinata](https://www.pinata.cloud/)
 
+## Python library requirements
+
+* `web3`
+* `streamlit`
+* `requests`
+* `time`
+* `cryptography.hazmat.backends`
+* `cryptography.hazmat.primitives`
+* `cryptography.hazmat.primitives.asymmetric`
+* `dotenv`
+* `os`
+* `json`
+* `PyPDF2`
+* `hashlib`
+* `cryptography.hazmat.primitives.serialization`
+* `web3.middleware`
+* `eth_account`
+* `pathlib`
+* `reportlab.lib.pagesizes`
+* `reportlab.platypus`
+* `reportlab.lib.styles`
+* `pdfplumber`
+
 ## Creating the `.env` file
 
 One has to create a `.env` file for uploading documents on Pinata
@@ -38,6 +61,6 @@ To run the file, one can run the following commands:
 streamlit run application/Home.py
 ```
 
-* Note
+# Note
 
 One must have `Sepolia ETH` on Metamask account `0xB9b7444621afC6c6f3028434e675Cf974085957c` to actually run this web app
