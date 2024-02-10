@@ -1,4 +1,5 @@
 import requests
+from web3 import Web3
 import json
 import os
 import PyPDF2
@@ -6,16 +7,19 @@ from dotenv import load_dotenv
 import hashlib
 import streamlit as st
 from utils.doc_utils import generate_certificate
-from connect import contract, w3
+from connect import contract, w3, account_address
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
-st.title('issue.py')
-
 load_dotenv()
 
+private_key=os.getenv('PRIVATE_KEY')
+account = w3.eth.account.from_key(private_key)
+account_address = os.getenv('ACCOUNT_ADDRESS')
+
+wallet_private_key = os.getenv('PRIVATE_KEY')
 api_key = os.getenv("PINATA_API")
 api_secret = os.getenv("PINATA_SECRET")
 
@@ -92,39 +96,36 @@ def upload_to_pinata(file_path, api_key, api_secret):
             # print(f"File uploaded to Pinata. IPFS Hash: {ipfs_hash}")
             return ipfs_hash
         else:
-            st.write(f"Error uploading to Pinata: {result.get('error', 'Unknown error')}")
+            # st.write(f"Error uploading to Pinata: {result.get('error', 'Unknown error')}")
             return None
 
-form = st.form(key='Issue Document to someone!')
-documentName = form.text_input('Document Name')
-recipientEmail = form.text_input('Recipient Email')
-orgEmail = form.text_input('Organization Email')
-cpi = form.text_input('CPI')
-submit = form.form_submit_button('Issue')
-
-if submit:
-    privateKey = contract.functions.getPrivateKey(orgEmail).call() 
-    private_key = serialization.load_pem_private_key(
-        privateKey,
-        password=None,  # Use a password if your key is encrypted
-    )
-    pdf_file_path = "certificate.pdf"
-    generate_certificate(documentName, recipientEmail, orgEmail, cpi, pdf_file_path)
-    with open('certificate.pdf', 'rb') as file:
+def upload(pdf_file_path, recipientEmail, orgEmail, documentName):
+    # generate_certificate(documentName, recipientEmail, orgEmail, cpi, pdf_file_path)
+    # documentName = "certificate"
+    with open(pdf_file_path, 'rb') as file:
         reader = PyPDF2.PdfReader(file)
         input_string = ""
         for page in reader.pages:
             input_string += page.extract_text()
     hashed_message = hash_string(input_string)
     # Sign the hashed message with private key
-    signature = sign_with_private_key(private_key, hashed_message)
-    input_pdf_path = 'certificate.pdf'
-    output_pdf_path = 'VC_ceritificate.pdf'
-    # Append the signature to the PDF
-    append_signature_to_pdf(input_pdf_path, output_pdf_path, signature)
+    privateKey = contract.functions.getPrivateKey(orgEmail).call()
+    private_key = serialization.load_pem_private_key(
+        privateKey,
+        password=None,
+    )
+    if(private_key != ""):
+        signature = sign_with_private_key(private_key, hashed_message)
+        input_pdf_path = pdf_file_path
+        output_pdf_path = 'VC_ceritificate.pdf'
+        # Append the signature to the PDF
+        append_signature_to_pdf(input_pdf_path, output_pdf_path, signature)
+    else:
+        output_pdf_path = pdf_file_path
     # Upload the PDF to Pinata
     ipfsHash = upload_to_pinata(output_pdf_path, api_key, api_secret)
     publicKey = contract.functions.getPublicKey(recipientEmail).call()
+    # print(publicKey)
     public_key = load_pem_public_key(publicKey, backend=default_backend())
     pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
@@ -136,10 +137,29 @@ if submit:
     )
     ciphertext = encrypt_with_public_key(public_key, ipfsHash.encode('utf-8'))
     os.remove(pdf_file_path)
-    os.remove("VC_ceritificate.pdf")
-    data_to_hash = f"{documentName}{recipientEmail}{orgEmail}{cpi}".encode('utf-8')
+    if(private_key != ""):
+        os.remove(output_pdf_path)
+    data_to_hash = f"{documentName}{recipientEmail}{orgEmail}".encode('utf-8')
     documentId = hashlib.sha256(data_to_hash).hexdigest()
 
     # Smart Contract Call
-    contract.functions.issueDocument(documentId, recipientEmail, ciphertext, orgEmail).transact({'from': w3.eth.accounts[0]})
-    st.success(f"Certificate successfully generated with Certificate ID: {documentId}")
+    nonce = w3.eth.get_transaction_count(account_address)
+    transaction = contract.functions.issueDocument(documentId, documentName, recipientEmail, ciphertext, orgEmail).build_transaction({
+    'chainId': 11155111,  # Ethereum mainnet; change as necessary
+    'gas': 2000000,
+    'gasPrice': w3.to_wei('50', 'gwei'),
+    'nonce': nonce,
+    })
+    # Sign transaction
+    signed_txn = w3.eth.account.sign_transaction(transaction, private_key=wallet_private_key)
+
+    # Send transaction
+    tx_hash = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+
+    # Get transaction receipt (may need to wait for transaction to be mined)
+    tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    print(f"Transaction successful with hash: {tx_receipt.transactionHash.hex()}")
+    # st.success(f"Certificate successfully generated with Certificate ID: {documentId}")
+
+# upload('/Users/gautamsharma/Desktop/Siang Mess Menu January.pdf','gautam.sharma@iitg.ac.in', 'g.adittya@iitg.ac.in', 'yo')

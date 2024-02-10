@@ -1,10 +1,13 @@
 from web3 import Web3
 import streamlit as st
-from connect import contract
 import requests
 import time
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+from dotenv import load_dotenv
+import os
+from connect import contract
 
 def decrypt_with_private_key(private_key, ciphertext):
     plaintext = private_key.decrypt(
@@ -30,10 +33,11 @@ if submit:
         password=None,
     )
     documentIds = contract.functions.getDocument(email).call()
-    for item, org in documentIds:
+    for item, name, org in documentIds:
         item = decrypt_with_private_key(ppriv, item)
         item = item.decode('utf-8')
         temp_url = url + item
-        st.write(temp_url)
+        st.write(item)
+        st.write(name)
         st.write(org)
     st.success(f"Certificates successfully fetched for email ID: {email}")
