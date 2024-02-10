@@ -40,4 +40,4 @@ streamlit run application/Home.py
 
 * Note
 
-One must have `Sepolia ETH` in their Metamask account to actually run this web app
+One must have `Sepolia ETH` on Metamask account `0xB9b7444621afC6c6f3028434e675Cf974085957c` to actually run this web app
